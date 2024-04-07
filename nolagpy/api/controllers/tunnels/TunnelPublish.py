@@ -1,8 +1,8 @@
 from typing import List, Union, Dict, Any
 from requests import Session
-from src.shared.constants import TData
-from src.shared.interfaces import IConnectOptions
-from src.shared.utils.transport import generateTransport
+from nolagpy.shared.constants import TData
+from nolagpy.shared.interfaces import IConnectOptions
+from nolagpy.shared.utils.transport import generateTransport
 
 route_namespace = "publish"
 

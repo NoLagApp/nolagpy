@@ -4,7 +4,7 @@ import threading
 from enum import Enum
 from typing import Any, Callable, Optional, Tuple
 
-from src.shared.constants import CONSTANT
+from nolagpy.shared.constants import CONSTANT
 
 # Define Enums
 
@@ -104,17 +104,32 @@ class NoLagClient:
             return
 
         def on_open(ws):
-            self._onOpen(None)
+            print("Opened connection")
 
         def on_message(ws, message):
-            print(message)
+            print(f"on_message: {ws}")
             self._onReceive(message)
 
-        def on_close(ws):
+        def on_close(ws, one, two):
+            print(f"on_close: {ws}")
+            print(f"one: {one}")
+            print(f"two: {two}")
             self._onClose(None)
 
         def on_error(ws, error):
             self._onError(error)
+
+        def on_message(ws, message):
+            print(message)
+
+        def on_open(ws):
+            print("Opened connection")
+
+        def on_error(ws, error):
+            print(error)
+
+        def on_close(ws, close_status_code, close_msg):
+            print("### closed ###")
 
         print(f"{self.protocol}://{self.host}{self.url}")
         self.wsInstance = websocket.WebSocketApp(
@@ -124,6 +139,7 @@ class NoLagClient:
             on_close=on_close,
             on_error=on_error
         )
+        websocket.enableTrace(True)
         self.wsInstance.run_forever()
 
     @property
@@ -132,6 +148,7 @@ class NoLagClient:
 
     def authenticate(self):
         self.connectionStatus = CONNECTING
+        print(f"authenticate: {self.authToken}")
         self.send(self.authToken.encode())
 
     def onOpen(self, callback: FConnection):
@@ -147,26 +164,20 @@ class NoLagClient:
         self.callbackOnError = callback
 
     def _onOpen(self, _):
-        self.connectionStatus = CONNECTED
+        self.connectionStatus = IDLE
         self.callbackOnOpen(None)
 
     def getAlertMessage(self, payload: bytes) -> IErrorMessage:
         codeSplit = payload.find(EEnvironment.Browser.value)
-        print(payload[:codeSplit])
         code = int(payload[:codeSplit])
         msg = payload[codeSplit + 1:].decode()
         return IErrorMessage(code, msg)
 
     def getGroupSeparatorIndex(self, payload: bytes) -> int:
-        print(f"getGroupSeparatorIndex1: {type(payload)}")
-        print(
-            f"getGroupSeparatorIndex2: {payload.find(GROUP_SEPARATOR)}")
         return payload.find(GROUP_SEPARATOR)
 
     def getGroups(self, payload: bytes) -> Tuple[bytes, bytes]:
         sliceIndex = self.getGroupSeparatorIndex(payload)
-
-        print(f"sliceIndex: {sliceIndex}")
         topicAndIdentifiers = payload[:sliceIndex]
         data = payload[sliceIndex + 1:]
         return topicAndIdentifiers, data
@@ -182,52 +193,47 @@ class NoLagClient:
         return topicName, nqlIdentifiers
 
     def decode(self, payload: bytes) -> IResponse:
-        print(f"payload 1: {payload}")
         topicAndIdentifiers, data = self.getGroups(payload)
         topicName, nqlIdentifiers = self.getRecords(topicAndIdentifiers)
-        print(f"payload: {payload}")
+        print(f"decode payload: {payload}")
         return IResponse(data, topicName, nqlIdentifiers)
 
-    def _onReceive(self, message: bytes):
-        print(message)
-        data = message
+    def _onReceive(self, data: bytes):
+        print(f"_onReceive: {data}")
         if not data:
             return
-        print(f"payload: {type(data)}")
-        print(f"payload: {data}")
-        print(f"payload: {type(CONNECTING)}")
-        print(f"payload: {CONNECTING}")
-        print(f"{data == CONNECTING}")
-        if data[0] == CONNECTING and self.connectionStatus == IDLE:
+        print(
+            f"Can connectionStatus: {self.connectionStatus}")
+        print(
+            f"Can auth: {data == CONNECTING and self.connectionStatus == IDLE}")
+        if data == CONNECTING and self.connectionStatus == IDLE:
+            print("Auth path")
             self.authenticate()
             return
 
-        print(data[:2])
-        if data[:2] == CONNECTED and self.connectionStatus == CONNECTING:
+        if data == CONNECTED and self.connectionStatus == CONNECTING:
             self.connectionStatus = CONNECTED
             self.deviceTokenId = data[2:]
             return
-        print(data[:2])
-        if data[0] == NEGATIVE_ACK_SEPARATOR:
+        if data == NEGATIVE_ACK_SEPARATOR:
             self.connectionStatus = CONNECTED
             self.callbackOnError(self.getAlertMessage(data))
             return
-        print(f"decode: {self.decode(data)}")
         self.callbackOnReceive(self.decode(data))
 
     def _onClose(self, error):
-        print(f"close:{error}")
         self.connectionStatus = DISCONNECTED
         self.callbackOnClose(None)
 
     def _onError(self, error):
-        print(f"error:{error}")
         self.connectionStatus = DISCONNECTED
         self.callbackOnError(error)
 
     def send(self, transport: bytes):
         if self.wsInstance:
-            self.wsInstance.send(transport)
+            print(f"transport{transport}")
+            sent = self.wsInstance.send(transport)
+            print(f"recv{self.wsInstance.header}")
 
     def heartbeat(self):
         if self.wsInstance:

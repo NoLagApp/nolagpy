@@ -1,13 +1,13 @@
 from enum import Enum
 import threading
 from typing import Any, Callable, Dict, List, Optional, Tuple
-from src.shared.interfaces import IConnectOptions, IErrorMessage, INqlIdentifiers, IResponse, ITunnelOptions
-from src.shared.constants import FConnection, TData
-from src.shared.types import dataType
+from nolagpy.shared.interfaces import IConnectOptions, IErrorMessage, INqlIdentifiers, IResponse, ITunnelOptions
+from nolagpy.shared.constants import FConnection, TData
+from nolagpy.shared.types import dataType
 from .topic import ITopic, Topic
 from .NoLagClient import NoLagClient
-from src.shared.enums import EVisibilityState
-from src.shared.utils.transport import generateTransport
+from nolagpy.shared.enums import EVisibilityState
+from nolagpy.shared.utils.transport import generateTransport
 
 
 class EConnectionStatus(Enum):
@@ -58,7 +58,6 @@ class Tunnel:
         self.noLagClient = NoLagClient(self.authToken, self.connectOptions)
         await self.noLagClient.connect()
         self.resetConnectAttempts()
-        print(self.noLagClient.deviceConnectionId)
         # self.startHeartbeat()
         self.reSubscribe()
 

@@ -1,8 +1,8 @@
 import requests
 from typing import Optional
-from src.api.controllers.tunnels.TunnelApi import ITunnelApi, TunnelApi
-from src.shared.constants import CONSTANT
-from src.shared.interfaces import IConnectOptions
+from nolagpy.api.controllers.tunnels.TunnelApi import ITunnelApi, TunnelApi
+from nolagpy.shared.constants import CONSTANT
+from nolagpy.shared.interfaces import IConnectOptions
 
 
 class IApiTunnel:

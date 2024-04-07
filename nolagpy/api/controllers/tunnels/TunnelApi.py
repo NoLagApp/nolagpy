@@ -2,11 +2,11 @@ from typing import Any, Dict, List, Protocol, Tuple
 
 from requests import Session
 
-# from src.api import ApiTunnel
-from src.api.controllers.tunnels.TunnelDevice import ITunnelDevice, TunnelDevice
-from src.api.controllers.tunnels.TunnelPublish import tunnelPublish
-from src.api.controllers.tunnels.TunnelTopic import ITunnelTopic, TunnelTopic
-from src.shared.interfaces import IHttpPublish
+# from nolagpy.api import ApiTunnel
+from nolagpy.api.controllers.tunnels.TunnelDevice import ITunnelDevice, TunnelDevice
+from nolagpy.api.controllers.tunnels.TunnelPublish import tunnelPublish
+from nolagpy.api.controllers.tunnels.TunnelTopic import ITunnelTopic, TunnelTopic
+from nolagpy.shared.interfaces import IHttpPublish
 
 
 class ITunnelApi(Protocol):

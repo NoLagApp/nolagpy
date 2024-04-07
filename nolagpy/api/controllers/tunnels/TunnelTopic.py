@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from requests import Session
-from src.shared.interfaces import ITopicQuery, ITopicModel, IPaginated
-from src.shared.utils.generateQueryString import generateQueryString
+from nolagpy.shared.interfaces import ITopicQuery, ITopicModel, IPaginated
+from nolagpy.shared.utils.generateQueryString import generateQueryString
 
 
 class ITunnelTopic:

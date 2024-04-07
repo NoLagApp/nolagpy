@@ -1,8 +1,9 @@
 from typing import Any, Callable, Dict, List, Optional
-from src.shared.constants import TData
-from src.shared.enums import EAction, ESeparator
-from src.shared.interfaces import INqlIdentifiers, IResponse
-from src.shared.utils.transport import (
+from nolagpy.client import NoLagClient
+from nolagpy.shared.constants import TData
+from nolagpy.shared.enums import EAction, ESeparator
+from nolagpy.shared.interfaces import INqlIdentifiers, IResponse
+from nolagpy.shared.utils.transport import (
     arrayOfString,
     generateTransport,
     nqlPayload,
@@ -25,8 +26,8 @@ class ITopic:
 
 
 class Topic(ITopic):
-    def __init__(self, connection: 'NoLagClient', topicName: str, identifiers: INqlIdentifiers):
-        self.connection: Optional['NoLagClient'] = None
+    def __init__(self, connection: NoLagClient, topicName: str, identifiers: INqlIdentifiers):
+        self.connection: Optional[NoLagClient] = None
         self.topicName: str = topicName
         self.callbackFn: Optional[Callable[[IResponse], None]] = None
         self.identifiers: List[str] = []
@@ -58,7 +59,7 @@ class Topic(ITopic):
     def reSubscribe(self) -> None:
         self.addIdentifiers({'OR': self.identifiers})
 
-    def setConnection(self, connection: 'NoLagClient') -> 'Topic':
+    def setConnection(self, connection: NoLagClient) -> 'Topic':
         self.connection = connection
         return self
 
@@ -77,7 +78,7 @@ class Topic(ITopic):
         nql = nqlPayload(arrayOfString(identifiers.get('OR', [])), EAction.Add)
         records = toRecordSeparator([topic_name, nql])
         if self.connection:
-            self.connection.send(records.buffer)
+            self.connection.send(records)
         return self
 
     def removeIdentifiers(self, identifiers: List[str]) -> 'Topic':
@@ -86,7 +87,7 @@ class Topic(ITopic):
         nql = nqlPayload(arrayOfString(identifiers), EAction.Delete)
         records = toRecordSeparator([topic_name, nql])
         if self.connection:
-            self.connection.send(records.buffer)
+            self.connection.send(records)
         return self
 
     def unsubscribe(self) -> bool:
@@ -94,7 +95,7 @@ class Topic(ITopic):
         nql = nqlPayload(b'')
         records = toRecordSeparator([topic_name, nql])
         if self.connection:
-            self.connection.send(records.buffer)
+            self.connection.send(records)
         return True
 
     def publish(self, data: bytearray, identifiers: List[str]) -> 'Topic':

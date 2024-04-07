@@ -1,7 +1,7 @@
 from typing import Any
 from requests import Session
-from src.shared.interfaces import IDeviceListQuery, IDeviceTokenModel, IPaginated
-from src.shared.utils.generateQueryString import generateQueryString
+from nolagpy.shared.interfaces import IDeviceListQuery, IDeviceTokenModel, IPaginated
+from nolagpy.shared.utils.generateQueryString import generateQueryString
 
 
 class ITunnelDevice:
