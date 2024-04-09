@@ -1,5 +1,7 @@
+import array
 import websocket
 import threading
+import asyncio
 
 from enum import Enum
 from typing import Any, Callable, Optional, Tuple
@@ -83,7 +85,7 @@ class NoLagClient:
         self.connectionStatus = IDLE
 
         self.callbackOnOpen = lambda _: None
-        self.callbackOnReceive = lambda _, __: None
+        self.callbackOnReceive = lambda _: None
         self.callbackOnClose = lambda _: None
         self.callbackOnError = lambda _: None
 
@@ -114,33 +116,25 @@ class NoLagClient:
             print(f"on_close: {ws}")
             print(f"one: {one}")
             print(f"two: {two}")
+            print("### closed ###")
             self._onClose(None)
 
         def on_error(ws, error):
             self._onError(error)
 
-        def on_message(ws, message):
-            print(message)
-
-        def on_open(ws):
-            print("Opened connection")
-
-        def on_error(ws, error):
-            print(error)
-
-        def on_close(ws, close_status_code, close_msg):
-            print("### closed ###")
-
         print(f"{self.protocol}://{self.host}{self.url}")
         self.wsInstance = websocket.WebSocketApp(
-            f"{self.protocol}://{self.host}{self.url}",
+            # f"{self.protocol}://{self.host}{self.url}",
+            "ws://localhost:5002/ws",
             on_open=on_open,
             on_message=on_message,
             on_close=on_close,
             on_error=on_error
         )
         websocket.enableTrace(True)
-        self.wsInstance.run_forever()
+        # asyncio.get_event_loop().run_until_complete(self.wsInstance)
+        # asyncio.get_event_loop().run_forever()
+        # self.wsInstance.run_forever()
 
     @property
     def status(self):
@@ -149,7 +143,11 @@ class NoLagClient:
     def authenticate(self):
         self.connectionStatus = CONNECTING
         print(f"authenticate: {self.authToken}")
-        self.send(self.authToken.encode())
+        encoded = self.authToken.encode()
+        print(encoded[:1])
+        array = bytearray(encoded)
+        self.send(bytes(self.authToken, "utf-8"))
+        print(f"authenticate: {array}")
 
     def onOpen(self, callback: FConnection):
         self.callbackOnOpen = callback
@@ -231,10 +229,10 @@ class NoLagClient:
 
     def send(self, transport: bytes):
         if self.wsInstance:
-            print(f"transport{transport}")
-            sent = self.wsInstance.send(transport)
-            print(f"recv{self.wsInstance.header}")
+            print(f"transport: {transport}")
+            sent = self.wsInstance.send_bytes(transport)
+            print(f"recv{self.wsInstance}")
 
     def heartbeat(self):
         if self.wsInstance:
-            self.wsInstance.send(b"")
+            self.wsInstance.send_bytes(b"")

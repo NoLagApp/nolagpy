@@ -22,8 +22,8 @@ class Tunnel:
         self.noLagClient: Optional[NoLagClient] = None
         self.connectOptions: Optional[IConnectOptions] = connectOptions
         self.authToken: str = authToken
-        self.topics: dataType[ITopic] = {}
-        self.heartbeatTimer: Optional[Any] = None
+        self.topics: Dict[str, ITopic] = {}
+        self.heartbeatTimer: threading.Timer = None
         self.defaultCheckConnectionInterval: int = 10000
         self.checkConnectionInterval: int = connectOptions.checkConnectionInterval if connectOptions and connectOptions.checkConnectionInterval else self.defaultCheckConnectionInterval
         self.reconnectAttempts: int = 0
@@ -41,7 +41,8 @@ class Tunnel:
 
     def startHeartbeat(self) -> None:
         self.heartbeatTimer = threading.Timer(
-            self.heartBeatInterval, self.startHeartbeat)
+            self.heartBeatInterval, self.startHeartbeat
+        )
         self.heartbeatTimer.start()
         if self.noLagClient:
             self.noLagClient.heartbeat()
@@ -58,7 +59,7 @@ class Tunnel:
         self.noLagClient = NoLagClient(self.authToken, self.connectOptions)
         await self.noLagClient.connect()
         self.resetConnectAttempts()
-        # self.startHeartbeat()
+        self.startHeartbeat()
         self.reSubscribe()
 
     def resetConnectAttempts(self) -> None:
@@ -134,12 +135,14 @@ class Tunnel:
 
     def subscribe(self, topicName: str, identifiers: INqlIdentifiers = {}) -> Optional[ITopic]:
         if self.noLagClient:
+            print("has client")
             if topicName in self.topics:
                 self.topics[topicName].reSubscribe()
                 return self.topics[topicName]
             else:
                 self.topics[topicName] = Topic(
                     self.noLagClient, topicName, identifiers)
+                print(f"topicName: {topicName}")
                 return self.topics[topicName]
 
     def publish(self, topicName: str, data: bytearray, identifiers: List[str] = []) -> None:
@@ -154,7 +157,7 @@ class Tunnel:
         return self.noLagClient.status if self.noLagClient else None
 
 
-async def WebSocketClient(authToken: str, options: Optional[ITunnelOptions] = None, connectOptions: Optional[IConnectOptions] = None) -> Any:
+async def WebSocketClient(authToken: str, options: Optional[ITunnelOptions] = None, connectOptions: Optional[IConnectOptions] = None) -> Tunnel:
     instance = Tunnel(authToken, options, connectOptions)
     await instance.initiate()
     return instance
