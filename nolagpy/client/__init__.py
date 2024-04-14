@@ -1,6 +1,8 @@
 from enum import Enum
 import threading
 from typing import Any, Callable, Dict, List, Optional, Tuple
+
+import websocket
 from nolagpy.shared.interfaces import IConnectOptions, IErrorMessage, INqlIdentifiers, IResponse, ITunnelOptions
 from nolagpy.shared.constants import FConnection, TData
 from nolagpy.shared.types import dataType
@@ -155,6 +157,10 @@ class Tunnel:
     @property
     def status(self) -> Optional[str]:
         return self.noLagClient.status if self.noLagClient else None
+
+    @property
+    def websocketInstance(self) -> websocket:
+        return self.noLagClient.wsInstance
 
 
 async def WebSocketClient(authToken: str, options: Optional[ITunnelOptions] = None, connectOptions: Optional[IConnectOptions] = None) -> Tunnel:

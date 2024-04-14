@@ -1,7 +1,6 @@
 import array
 import websocket
 import threading
-import asyncio
 
 from enum import Enum
 from typing import Any, Callable, Optional, Tuple
@@ -94,13 +93,13 @@ class NoLagClient:
 
     async def connect(self) -> Any:
         self.connectionStatus = IDLE
-        return self.nodeInstance()
+        return await self.nodeInstance()
 
     def disconnect(self):
         if self.wsInstance and self.wsInstance.connected:
             self.wsInstance.close()
 
-    def nodeInstance(self):
+    async def nodeInstance(self):
         self.environment = EEnvironment.Nodejs
         if self.connectionStatus == CONNECTED:
             return
@@ -124,14 +123,22 @@ class NoLagClient:
 
         print(f"{self.protocol}://{self.host}{self.url}")
         self.wsInstance = websocket.WebSocketApp(
-            # f"{self.protocol}://{self.host}{self.url}",
-            "ws://localhost:5002/ws",
+            f"{self.protocol}://{self.host}{self.url}",
             on_open=on_open,
             on_message=on_message,
             on_close=on_close,
             on_error=on_error
         )
-        websocket.enableTrace(True)
+        # self.wsInstance.connect("ws://echo.websocket.events/")
+        # websocket.enableTrace(True)
+        wst = threading.Thread(target=self.wsInstance.run_forever)
+        wst.daemon = True
+        wst.start()
+        print(22222222)
+        while True:
+            if (self.connectionStatus != IDLE):
+                print(55555555)
+                break
         # asyncio.get_event_loop().run_until_complete(self.wsInstance)
         # asyncio.get_event_loop().run_forever()
         # self.wsInstance.run_forever()
@@ -193,7 +200,9 @@ class NoLagClient:
     def decode(self, payload: bytes) -> IResponse:
         topicAndIdentifiers, data = self.getGroups(payload)
         topicName, nqlIdentifiers = self.getRecords(topicAndIdentifiers)
-        print(f"decode payload: {payload}")
+        print(f"decode payload - data: {data}")
+        print(f"decode payload - topicName: {topicName}")
+        print(f"decode payload - nqlIdentifiers: {nqlIdentifiers}")
         return IResponse(data, topicName, nqlIdentifiers)
 
     def _onReceive(self, data: bytes):

@@ -50,6 +50,7 @@ class Topic(ITopic):
             identifier for identifier in self.identifiers if identifier not in identifiers]
 
     def subscribe(self, identifiers: List[str]) -> None:
+        print("subscribe")
         topic_name = topicPayload(self.topicName)
         nql = nqlPayload(arrayOfString(identifiers), EAction.Add)
         records = toRecordSeparator([topic_name, nql])
