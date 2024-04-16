@@ -30,7 +30,7 @@ class Tunnel:
         self.checkConnectionInterval: int = connectOptions.checkConnectionInterval if connectOptions and connectOptions.checkConnectionInterval else self.defaultCheckConnectionInterval
         self.reconnectAttempts: int = 0
         self.maxReconnectAttempts: int = 5
-        self.heartBeatInterval: int = 20000
+        self.heartBeatInterval: int = 20  # seconds
         self.visibilityState: str = EVisibilityState.Visible
         self.callbackOnReceive: Optional[Callable[[IResponse], None]] = None
         self.callbackOnDisconnect: FConnection = lambda _: None
@@ -42,12 +42,15 @@ class Tunnel:
         return self.noLagClient.deviceTokenId if self.noLagClient else None
 
     def startHeartbeat(self) -> None:
+        print("startHeartbeat")
+        if self.noLagClient:
+            print("doHeartbeat")
+            self.noLagClient.heartbeat()
+
         self.heartbeatTimer = threading.Timer(
             self.heartBeatInterval, self.startHeartbeat
         )
         self.heartbeatTimer.start()
-        if self.noLagClient:
-            self.noLagClient.heartbeat()
 
     def stopHeartbeat(self) -> None:
         if self.heartbeatTimer:
@@ -145,6 +148,7 @@ class Tunnel:
                 self.topics[topicName] = Topic(
                     self.noLagClient, topicName, identifiers)
                 print(f"topicName: {topicName}")
+                print(f"topicNameInstance: {self.topics[topicName]}")
                 return self.topics[topicName]
 
     def publish(self, topicName: str, data: bytearray, identifiers: List[str] = []) -> None:
