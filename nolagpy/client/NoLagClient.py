@@ -108,7 +108,7 @@ class NoLagClient:
             print("Opened connection")
 
         def on_message(ws, message):
-            print(f"on_message: {ws}")
+            print(f"on_message: {message}")
             self._onReceive(message)
 
         def on_close(ws, one, two):
@@ -121,7 +121,6 @@ class NoLagClient:
         def on_error(ws, error):
             self._onError(error)
 
-        print(f"{self.protocol}://{self.host}{self.url}")
         self.wsInstance = websocket.WebSocketApp(
             f"{self.protocol}://{self.host}{self.url}",
             on_open=on_open,
@@ -130,11 +129,10 @@ class NoLagClient:
             on_error=on_error
         )
         # self.wsInstance.connect("ws://echo.websocket.events/")
-        # websocket.enableTrace(True)
+        websocket.enableTrace(True)
         wst = threading.Thread(target=self.wsInstance.run_forever)
         wst.daemon = True
         wst.start()
-        print(22222222)
         while True:
             if (self.connectionStatus != IDLE):
                 print(55555555)
@@ -149,12 +147,9 @@ class NoLagClient:
 
     def authenticate(self):
         self.connectionStatus = CONNECTING
-        print(f"authenticate: {self.authToken}")
         encoded = self.authToken.encode()
-        print(encoded[:1])
         array = bytearray(encoded)
         self.send(bytes(self.authToken, "utf-8"))
-        print(f"authenticate: {array}")
 
     def onOpen(self, callback: FConnection):
         self.callbackOnOpen = callback
@@ -200,21 +195,12 @@ class NoLagClient:
     def decode(self, payload: bytes) -> IResponse:
         topicAndIdentifiers, data = self.getGroups(payload)
         topicName, nqlIdentifiers = self.getRecords(topicAndIdentifiers)
-        print(f"decode payload - data: {data}")
-        print(f"decode payload - topicName: {topicName}")
-        print(f"decode payload - nqlIdentifiers: {nqlIdentifiers}")
         return IResponse(data, topicName, nqlIdentifiers)
 
     def _onReceive(self, data: bytes):
-        print(f"_onReceive: {data}")
         if not data:
             return
-        print(
-            f"Can connectionStatus: {self.connectionStatus}")
-        print(
-            f"Can auth: {data == CONNECTING and self.connectionStatus == IDLE}")
         if data == CONNECTING and self.connectionStatus == IDLE:
-            print("Auth path")
             self.authenticate()
             return
 
@@ -238,9 +224,7 @@ class NoLagClient:
 
     def send(self, transport: bytes):
         if self.wsInstance:
-            print(f"transport: {transport}")
-            sent = self.wsInstance.send_bytes(transport)
-            print(f"recv{self.wsInstance}")
+            self.wsInstance.send_bytes(transport)
 
     def heartbeat(self):
         if self.wsInstance:

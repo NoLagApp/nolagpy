@@ -33,6 +33,7 @@ class Topic(ITopic):
         self.identifiers: List[str] = []
         self.setConnection(connection)
         self.saveIdentifiers(identifiers.get('OR', []))
+        self.subscribe(identifiers.get('OR', []))
 
     def findSavedIdentifier(self, identifier: str) -> Optional[str]:
         for saved_identifier in self.identifiers:
@@ -50,12 +51,11 @@ class Topic(ITopic):
             identifier for identifier in self.identifiers if identifier not in identifiers]
 
     def subscribe(self, identifiers: List[str]) -> None:
-        print("subscribe")
         topic_name = topicPayload(self.topicName)
         nql = nqlPayload(arrayOfString(identifiers), EAction.Add)
         records = toRecordSeparator([topic_name, nql])
         if self.connection:
-            self.connection.send(records.buffer)
+            self.connection.send(records)
 
     def reSubscribe(self) -> None:
         self.addIdentifiers({'OR': self.identifiers})
@@ -76,7 +76,8 @@ class Topic(ITopic):
     def addIdentifiers(self, identifiers: INqlIdentifiers) -> 'Topic':
         self.saveIdentifiers(identifiers.get('OR', []))
         topic_name = topicPayload(self.topicName)
-        nql = nqlPayload(arrayOfString(identifiers.get('OR', [])), EAction.Add)
+        nql = nqlPayload(arrayOfString(
+            identifiers.get('OR', [])), EAction.Add)
         records = toRecordSeparator([topic_name, nql])
         if self.connection:
             self.connection.send(records)

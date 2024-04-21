@@ -18,38 +18,43 @@ class ESeparator(Enum):
 def toUnitSeparator(unit_array):
     byte_length = 0
 
-    if unit_array[0] and unit_array[1]:
+    #  add space for separator
+    if len(unit_array) == 2:
+        # total byte data
+        # plus extra byte for separator
         byte_length = len(unit_array[0]) + len(unit_array[1]) + 1
-    elif unit_array[0]:
+    elif len(unit_array) == 1:
         byte_length = len(unit_array[0])
 
     unit_data = bytearray(byte_length)
 
-    if unit_array[0] and unit_array[1]:
-        unit_data[:len(unit_array[0])] = toUint8Array(unit_array[0])
+    if len(unit_array) == 2:
+        unit_data = toUint8Array(unit_data, unit_array[0], 0)
         unit_data[len(unit_array[0])] = ESeparator.Unit.value
-        unit_data[len(unit_array[0]) + 1:] = toUint8Array(unit_array[1])
-    elif unit_array[0]:
-        unit_data[:len(unit_array[0])] = toUint8Array(unit_array[0])
-
+        unit_data = toUint8Array(unit_data,
+                                 unit_array[1], len(unit_array[0]) + 1)
+    elif len(unit_array) == 1:
+        unit_data = toUint8Array(unit_data, unit_array[0], 0)
     return bytes(unit_data)
 
 
-def toUint8Array(uint8_array, string, offset):
-    for char in string:
-        uint8_array[offset] = ord(char)
+def toUint8Array(uint8_array: bytearray, string: str, offset: int) -> bytearray:
+    str_len = len(string)
+    for i in range(str_len):
+        uint8_array[offset] = ord(string[i])
         offset += 1
     return uint8_array
 
 
-def topicPayload(topic_name, action=None):
-    action_string = action.value if action else ''
-    return toUnitSeparator([topic_name, action_string])
+def topicPayload(topic_name, action: EAction = None):
+    actionValue = action.value if action is not None else None
+    return toUnitSeparator([item for item in [topic_name, actionValue] if item])
 
 
-def nqlPayload(identifiers, action=None):
+def nqlPayload(identifiers, action: EAction = None):
+    actionValue = action.value if action is not None else None
     separator = 31
-    action_string = bytes([action.value]) if action else bytes()
+    action_string = actionValue.encode('utf-8') if action else bytes()
     return toTransportSeparator([identifiers, action_string], separator)
 
 
@@ -76,7 +81,9 @@ def toTransportSeparator(record_array, separator):
     return bytes(record_data)
 
 
-def arrayOfString(identifiers=None):
+def arrayOfString(identifiers=None) -> bytes:
+    #  count the number of characters found in all the identifiers
+    #  we need this number to construct the Uint8Array
     identifiers = identifiers or []
     identifiers_length = sum(len(item) for item in identifiers)
     separator_length = len(identifiers) - 1 if len(identifiers) > 1 else 0

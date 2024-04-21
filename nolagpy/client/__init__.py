@@ -42,9 +42,7 @@ class Tunnel:
         return self.noLagClient.deviceTokenId if self.noLagClient else None
 
     def startHeartbeat(self) -> None:
-        print("startHeartbeat")
         if self.noLagClient:
-            print("doHeartbeat")
             self.noLagClient.heartbeat()
 
         self.heartbeatTimer = threading.Timer(
@@ -140,15 +138,12 @@ class Tunnel:
 
     def subscribe(self, topicName: str, identifiers: INqlIdentifiers = {}) -> Optional[ITopic]:
         if self.noLagClient:
-            print("has client")
             if topicName in self.topics:
                 self.topics[topicName].reSubscribe()
                 return self.topics[topicName]
             else:
                 self.topics[topicName] = Topic(
                     self.noLagClient, topicName, identifiers)
-                print(f"topicName: {topicName}")
-                print(f"topicNameInstance: {self.topics[topicName]}")
                 return self.topics[topicName]
 
     def publish(self, topicName: str, data: bytearray, identifiers: List[str] = []) -> None:
